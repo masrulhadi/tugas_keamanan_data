@@ -1,16 +1,16 @@
-# Panduan Tugas Besar KDI — Kelompok 4
+# Panduan Tugas Besar KDI — Kelompok 3
 ## Rencong Digital Health (RDH) dan Rencong CSIRT
 
-> **Versi 2.** Disusun untuk **Kelompok 4 (X = 04)**. Semua nilai (hostname, IP, port, VPN) sudah dihitung.
+> **Versi 3.** Disusun untuk **Kelompok 3 (X = 03)**. Semua nilai (hostname, IP, port, VPN) sudah dihitung.
 > Panduan ini ditulis dari sudut pandang **anggota kelompok yang ikut mengambil keputusan**, jadi di bagian awal kamu akan menemukan *keputusan tim* beserta alasan logisnya. Kalau ada yang ingin diubah, ubah di awal supaya semua bagian tetap konsisten.
 
 **Aturan keras dari dokumen tugas (jangan dilanggar):**
 
 | Aturan | Artinya buat kita |
 |---|---|
-| Uji hanya di VM sendiri | Sniffing, nmap, login gagal hanya antar `kdi-kel04-srv` dan `kdi-kel04-cli`. Jangan menyentuh WiFi kampus/publik. |
+| Uji hanya di VM sendiri | Sniffing, nmap, login gagal hanya antar `kdi-kel03-srv` dan `kdi-kel03-cli`. Jangan menyentuh WiFi kampus/publik. |
 | Data dummy saja | Nama, email, telepon pasien semuanya fiktif. Jangan pakai data anggota kelompok. |
-| Hostname harus terlihat | Setiap screenshot dan demo menampilkan prompt `admin04@kdi-kel04-srv` atau `...@kdi-kel04-cli`. |
+| Hostname harus terlihat | Setiap screenshot dan demo menampilkan prompt `admin03@kdi-kel03-srv` atau `...@kdi-kel03-cli`. |
 | Sensor rahasia | Password, passphrase, private key, QR TOTP, kode cadangan wajib ditutup (blok hitam). |
 | A2 dan D2 kata-kata sendiri | Panduan ini hanya memberi kerangka dan fakta pegangan, bukan teks jadi. |
 | Sebut tool AI | Tulis di laporan tool AI yang dipakai dan untuk apa (hanya untuk memahami konsep/mengatasi error). |
@@ -21,7 +21,7 @@
 
 0. [Keputusan tim dan cerita besar RDH](#0-keputusan-tim-dan-cerita-besar-rdh)
 1. [Identitas organisasi (isi BAB 1)](#1-identitas-organisasi-rdh-isi-bab-1)
-2. [Parameter final Kelompok 4](#2-parameter-final-kelompok-4)
+2. [Parameter final Kelompok 3](#2-parameter-final-kelompok-3)
 3. [Persiapan lab](#3-persiapan-lab)
 4. [Bagian A: Konsep, etika, privasi](#4-bagian-a--konsep-etika-dan-privasi)
 5. [Bagian B: Enkripsi, integritas, backup](#5-bagian-b--enkripsi-integritas-dan-backup)
@@ -45,10 +45,10 @@
 |---|---|---|
 | 1 | **Organisasi: Rencong Digital Health (RDH)**, klinik digital di Banda Aceh dengan layanan pendaftaran online, telekonsultasi, rekam medis elektronik, dan pembayaran online. | Data kesehatan dan keuangan pribadi termasuk **data pribadi yang bersifat spesifik** menurut UU PDP, jadi tuntutan keamanannya nyata. Setiap kontrol yang kita pasang punya alasan bisnis yang jelas, bukan sekadar menuruti tugas. |
 | 2 | **Tim keamanan: Rencong CSIRT (RCSIRT)** dengan fungsi pemantauan ala SOC ringan. | Tugas meminta kita berperan sebagai CSIRT. Dengan nama dan struktur tetap, laporan D2 dan video terasa seperti dokumen organisasi sungguhan. |
-| 3 | **Staf RDH bekerja jarak jauh lewat VPN.** | Ini menghubungkan kasus A2 (**VPN Fortinet**, sisa 4 mod 4 = 0) dengan praktik C5 (WireGuard). Cerita menjadi satu rangkaian: *VPN adalah pintu masuk, jadi pintunya harus kuat.* |
+| 3 | **Staf RDH bekerja jarak jauh lewat VPN, dan akses administrasi server hanya boleh lewat VPN.** | Pintu administrasi tidak boleh terbuka ke semua orang. Ini alasan bisnis untuk C4 (firewall) dan C5 (WireGuard), dan sejalan dengan pelajaran PDN: semakin kecil permukaan serangan, semakin sulit penyerang mendapat pijakan awal. |
 | 4 | **Server memakai tiga zona data** (`/data/public`, `/data/internal`, `/data/confidential`) dan satu subfolder `rekam_medis` yang hanya boleh dibuka admin. | Memetakan klasifikasi A1 langsung ke struktur folder C1, jadi prediksi akses bisa dijelaskan dari *kebijakan*, bukan asal. |
-| 5 | **Hanya `admin04` yang boleh login SSH.** `staf04` dan `auditor04` ada sebagai akun peran, diuji lewat `sudo -u`. | Prinsip *least privilege*. Staf dan auditor bekerja lewat aplikasi/file share, bukan shell server. |
-| 6 | **Insiden D1 = brute force SSH dari akun VPN yang diduga bocor.** Klien (`10.10.4.2`) berperan sebagai penyerang yang sudah punya akses VPN. | Sesuai pelajaran Fortinet: kredensial VPN yang bocor memberi penyerang pintu masuk, lalu ia mencoba masuk ke server. Kita tunjukkan lapisan pertahanan berikutnya (MFA + fail2ban). |
+| 5 | **Hanya `admin03` yang boleh login SSH.** `staf03` dan `auditor03` ada sebagai akun peran, diuji lewat `sudo -u`. | Prinsip *least privilege*. Staf dan auditor bekerja lewat aplikasi/file share, bukan shell server. |
+| 6 | **Insiden D1 = percobaan akses awal (brute force SSH) oleh pihak yang sudah berada di jaringan VPN** (akun VPN bocor atau laptop staf terinfeksi). Klien (`10.10.3.2`) berperan sebagai penyerang. | Pada rantai serangan ransomware seperti PDN, akses awal adalah langkah pertama; langkah berikutnya mematikan pertahanan lalu mengenkripsi data. Kita tunjukkan lapisan yang menahan di langkah pertama (MFA + fail2ban) **dan** lapisan terakhir kalau semuanya gagal (backup B4). |
 | 7 | **Snapshot bernama** sebelum setiap perubahan berisiko (lihat 3.3), dan **change log** ditulis sambil bekerja. | Praktik organisasi nyata: setiap perubahan bisa dilacak dan dibatalkan. Ini juga jadi bahan "Preparation" di laporan NIST. |
 | 8 | **Evidence dikumpulkan sambil bekerja** dengan penamaan baku (`B1-01-enkripsi.png`). | Menghindari kepanikan di hari terakhir dan memudahkan penomoran gambar di laporan. |
 
@@ -58,8 +58,8 @@ Pakai alur ini di pembukaan video dan di BAB 1, supaya semua bagian terasa satu 
 
 > **RDH** baru membuka layanan klinik digital. Datanya sensitif (identitas pasien, rekam medis, pembayaran), stafnya sebagian bekerja dari rumah. Pimpinan meminta **Rencong CSIRT** memastikan data aman. Tim bekerja dalam empat fase:
 >
-> 1. **Fondasi (Bagian A):** *Data apa yang kita pegang, seberapa rahasia, dan apa kewajiban hukumnya?* Kita belajar dari kasus VPN Fortinet.
-> 2. **Lindungi data (Bagian B):** *Kalau data dicuri atau rusak, apa yang tetap aman?* Enkripsi, tanda tangan, hash, backup.
+> 1. **Fondasi (Bagian A):** *Data apa yang kita pegang, seberapa rahasia, dan apa kewajiban hukumnya?* Kita belajar dari **kasus PDN**: pusat data nasional yang lumpuh akibat ransomware.
+> 2. **Lindungi data (Bagian B):** *Kalau data dicuri atau dienkripsi pelaku, apa yang tetap aman dan bisa dipulihkan?* Enkripsi, tanda tangan, hash, dan **backup** (inti pelajaran PDN).
 > 3. **Kunci pintu (Bagian C):** *Siapa boleh masuk, lewat mana, dan bagaimana kita memastikan itu benar dia?* RBAC, SSH + MFA, HTTPS, firewall, VPN.
 > 4. **Uji ketahanan (Bagian D):** *Kalau tetap ada yang mencoba menjebol, apakah kita sanggup mendeteksi, menahan, dan belajar?* fail2ban dan laporan NIST.
 
@@ -115,13 +115,13 @@ Satu halaman cukup. Ini yang menjadi "landasan" semua kontrol di Bab 3.
 
 | ID | Aset | Lokasi | Pemilik | Klasifikasi |
 |---|---|---|---|---|
-| A-01 | Server utama `kdi-kel04-srv` | VM server | admin04 | Highly Confidential |
-| A-02 | Laptop staf remote `kdi-kel04-cli` | VM klien | staf/analis | Internal |
-| A-03 | Berkas pelanggan `data_pelanggan_kel04.csv` | `/data/confidential` | admin04 | Confidential |
-| A-04 | Rekam medis | `/data/confidential/rekam_medis` | admin04 | Highly Confidential |
-| A-05 | Backup terenkripsi | `/var/backups/rencong` + klien | admin04 | Highly Confidential |
-| A-06 | Portal internal (Nginx) | server, port 443 | admin04 | Confidential |
-| A-07 | Kunci SSH, GPG, WireGuard | home admin04, `/etc/wireguard` | admin04 | Highly Confidential |
+| A-01 | Server utama `kdi-kel03-srv` | VM server | admin03 | Highly Confidential |
+| A-02 | Laptop staf remote `kdi-kel03-cli` | VM klien | staf/analis | Internal |
+| A-03 | Berkas pelanggan `data_pelanggan_kel03.csv` | `/data/confidential` | admin03 | Confidential |
+| A-04 | Rekam medis | `/data/confidential/rekam_medis` | admin03 | Highly Confidential |
+| A-05 | Backup terenkripsi | `/var/backups/rencong` + klien | admin03 | Highly Confidential |
+| A-06 | Portal internal (Nginx) | server, port 443 | admin03 | Confidential |
+| A-07 | Kunci SSH, GPG, WireGuard | home admin03, `/etc/wireguard` | admin03 | Highly Confidential |
 
 ### 1.4 Register risiko (pegangan "kenapa kontrol ini ada")
 
@@ -129,9 +129,9 @@ Satu halaman cukup. Ini yang menjadi "landasan" semua kontrol di Bab 3.
 |---|---|---|---|---|
 | R1 | Brute force/penyalahgunaan login SSH | Pengambilalihan server (C, I, A) | Kunci SSH + TOTP, port non-standar, `AllowUsers`, fail2ban | C2, D1 |
 | R2 | Penyadapan kredensial di jaringan | Pencurian akun (C) | HTTPS, VPN | C3, C5 |
-| R3 | Data hilang/dienkripsi pelaku (ransomware) | Layanan lumpuh (A) | Backup terenkripsi, salinan terpisah, uji restore | B4 |
+| R3 | Data hilang/dienkripsi pelaku (ransomware, seperti PDN) | Layanan lumpuh (A) | Backup terenkripsi, salinan terpisah, uji restore | B4 |
 | R4 | Akses berlebihan oleh pengguna internal | Kebocoran/perubahan data (C, I) | RBAC + ACL, klasifikasi data | C1 |
-| R5 | Kredensial VPN bocor / gateway VPN tak ter-patch | Pintu masuk penyerang (C, I, A) | MFA, VPN minim permukaan serangan, firewall, pemantauan | A2, C4, C5, D1 |
+| R5 | Penyerang yang sudah di dalam jaringan/VPN (akun bocor, laptop staf terinfeksi) mencoba mengambil alih server lalu menonaktifkan pertahanan | Server dikuasai, data dienkripsi/dicuri (C, I, A) | MFA, firewall default deny, akses admin hanya via VPN, fail2ban, backup | A2, C2, C4, C5, D1 |
 | R6 | Data cadangan atau data kiriman diubah/dicuri | Pemalsuan data (I, C) | Enkripsi, hash, tanda tangan digital | B1–B3 |
 
 ### 1.5 Topologi lab (buat gambar di draw.io/PowerPoint, atau pakai ini sebagai dasar)
@@ -141,15 +141,15 @@ Satu halaman cukup. Ini yang menjadi "landasan" semua kontrol di Bab 3.
         ┌────────────────────────────────────────────────┐
         │  Host-only 192.168.56.0/24                     │
         │                                                │
-        │  kdi-kel04-cli ───────────────── kdi-kel04-srv │
-        │  192.168.56.154                  192.168.56.104│
+        │  kdi-kel03-cli ───────────────── kdi-kel03-srv │
+        │  192.168.56.153                  192.168.56.103│
         │  (laptop staf / "penyerang")     (server RDH)  │
-        │       │      WireGuard 10.10.4.0/24     │      │
-        │       └── 10.10.4.2 ══ UDP 51820 ══ 10.10.4.1  │
+        │       │      WireGuard 10.10.3.0/24     │      │
+        │       └── 10.10.3.2 ══ UDP 51820 ══ 10.10.3.1  │
         │                                                │
         │  Adapter NAT (internet) di kedua VM            │
         └────────────────────────────────────────────────┘
-        Wireshark: berjalan di kdi-kel04-cli (interface Host-only)
+        Wireshark: berjalan di kdi-kel03-cli (interface Host-only)
 ```
 
 ### 1.6 Spesifikasi host
@@ -158,22 +158,22 @@ Isi dengan laptop/PC yang dipakai: tipe, prosesor, RAM (≥ 8 GB), versi Virtual
 
 ---
 
-## 2. Parameter final Kelompok 4
+## 2. Parameter final Kelompok 3
 
-| Parameter | Aturan | **Nilai Kelompok 4** |
+| Parameter | Aturan | **Nilai Kelompok 3** |
 |---|---|---|
-| Hostname server | `kdi-kelX-srv` | **`kdi-kel04-srv`** |
-| Hostname klien | `kdi-kelX-cli` | **`kdi-kel04-cli`** |
-| IP server (Host-only) | `192.168.56.(100+X)/24` | **`192.168.56.104/24`** |
-| IP klien (Host-only) | `192.168.56.(150+X)/24` | **`192.168.56.154/24`** |
-| Port SSH baru | `2200+X` | **`2204`** |
-| Subnet VPN WireGuard | `10.10.X.0/24` (X tanpa nol depan) | **`10.10.4.0/24`** (server `10.10.4.1`, klien `10.10.4.2`) |
-| User Linux | `adminX`, `stafX`, `auditorX` | **`admin04`, `staf04`, `auditor04`** |
-| File data dummy | `data_pelanggan_kelX.csv` (min. 20 baris) | **`data_pelanggan_kel04.csv`** |
-| Studi kasus | sisa X mod 4 | 4 mod 4 = **0 → VPN Fortinet** |
+| Hostname server | `kdi-kelX-srv` | **`kdi-kel03-srv`** |
+| Hostname klien | `kdi-kelX-cli` | **`kdi-kel03-cli`** |
+| IP server (Host-only) | `192.168.56.(100+X)/24` | **`192.168.56.103/24`** |
+| IP klien (Host-only) | `192.168.56.(150+X)/24` | **`192.168.56.153/24`** |
+| Port SSH baru | `2200+X` | **`2203`** |
+| Subnet VPN WireGuard | `10.10.X.0/24` (X tanpa nol depan) | **`10.10.3.0/24`** (server `10.10.3.1`, klien `10.10.3.2`) |
+| User Linux | `adminX`, `stafX`, `auditorX` | **`admin03`, `staf03`, `auditor03`** |
+| File data dummy | `data_pelanggan_kelX.csv` (min. 20 baris) | **`data_pelanggan_kel03.csv`** |
+| Studi kasus | sisa X mod 4 | 3 mod 4 = **3 → PDN** |
 | Port WireGuard (keputusan tim) | bebas | `51820/udp` |
 
-> Hati-hati: subnet VPN ditulis `10.10.4.0/24` (**bukan** `10.10.04.0/24`). Sedangkan hostname memakai dua digit (`kel04`).
+> Hati-hati: subnet VPN ditulis `10.10.3.0/24` (**bukan** `10.10.03.0/24`). Sedangkan hostname memakai dua digit (`kel03`).
 
 ---
 
@@ -187,7 +187,7 @@ Isi dengan laptop/PC yang dipakai: tipe, prosesor, RAM (≥ 8 GB), versi Virtual
 | Spesifikasi | 1 vCPU, RAM 2 GB, disk 20 GB | 1–2 vCPU, RAM 2 GB |
 | Adapter 1 | NAT | NAT |
 | Adapter 2 | Host-only (192.168.56.0/24) | Host-only |
-| User saat instalasi | **`admin04`** | bebas (misal `klien04`) |
+| User saat instalasi | **`admin03`** | bebas (misal `klien03`) |
 | Pilihan saat instal | centang **Install OpenSSH server** | |
 
 Langkah:
@@ -201,8 +201,8 @@ Langkah:
 **Di server:**
 
 ```bash
-sudo hostnamectl set-hostname kdi-kel04-srv
-sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 kdi-kel04-srv/' /etc/hosts
+sudo hostnamectl set-hostname kdi-kel03-srv
+sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1 kdi-kel03-srv/' /etc/hosts
 sudo timedatectl set-timezone Asia/Jakarta     # supaya log langsung berwaktu WIB
 ip a                                           # cek nama interface host-only (biasanya enp0s8)
 ```
@@ -217,25 +217,25 @@ network:
   version: 2
   ethernets:
     enp0s8:
-      addresses: [192.168.56.104/24]
+      addresses: [192.168.56.103/24]
 ```
 ```bash
 sudo chmod 600 /etc/netplan/60-hostonly.yaml
 sudo netplan apply
-ip a        # pastikan 192.168.56.104 muncul di enp0s8
+ip a        # pastikan 192.168.56.103 muncul di enp0s8
 ```
 
 **Di klien (Ubuntu Desktop memakai NetworkManager):**
 
 ```bash
-sudo hostnamectl set-hostname kdi-kel04-cli
+sudo hostnamectl set-hostname kdi-kel03-cli
 sudo timedatectl set-timezone Asia/Jakarta
-sudo nmcli con add type ethernet ifname enp0s8 con-name hostonly ip4 192.168.56.154/24
+sudo nmcli con add type ethernet ifname enp0s8 con-name hostonly ip4 192.168.56.153/24
 sudo nmcli con up hostonly
-ping -c 3 192.168.56.104        # harus berbalas
+ping -c 3 192.168.56.103        # harus berbalas
 ```
 
-Buka terminal baru supaya prompt menampilkan `...@kdi-kel04-srv` / `...@kdi-kel04-cli`.
+Buka terminal baru supaya prompt menampilkan `...@kdi-kel03-srv` / `...@kdi-kel03-cli`.
 
 > **Logika zona waktu:** Timeline insiden D2 harus cocok antara log server, Wireshark, dan laporan. Menyamakan zona waktu sekarang menghemat banyak kebingungan nanti.
 
@@ -255,7 +255,7 @@ Buat **change log** (tabel di lampiran laporan), isi sambil kerja:
 
 | Waktu | Perubahan | Oleh | Alasan | Snapshot |
 |---|---|---|---|---|
-| 2026-11-xx 19:30 | SSH port 22 → 2204, matikan login root | Anggota 4 | Kebijakan #4 | s1-sebelum-ssh |
+| 2026-11-xx 19:30 | SSH port 22 → 2203, matikan login root | Anggota 4 | Kebijakan #4 | s1-sebelum-ssh |
 
 ### 3.4 Instal alat bantu
 
@@ -275,7 +275,7 @@ sudo usermod -aG wireshark $USER      # lalu logout dan login lagi
 
 ### 3.5 Buat group, user, dan struktur `/data`
 
-Kita buat sekarang karena B2 butuh user `auditor04`, dan B4 butuh folder `/data` untuk dibackup. **Hak akses final** baru dipasang di C1.
+Kita buat sekarang karena B2 butuh user `auditor03`, dan B4 butuh folder `/data` untuk dibackup. **Hak akses final** baru dipasang di C1.
 
 ```bash
 # Group peran
@@ -283,35 +283,35 @@ sudo groupadd admin
 sudo groupadd staf
 sudo groupadd auditor
 
-# User peran (tanpa password, karena hanya admin04 yang login SSH)
-sudo adduser --disabled-password --gecos "" staf04
-sudo adduser --disabled-password --gecos "" auditor04
+# User peran (tanpa password, karena hanya admin03 yang login SSH)
+sudo adduser --disabled-password --gecos "" staf03
+sudo adduser --disabled-password --gecos "" auditor03
 
 # Masukkan ke group
-sudo usermod -aG admin admin04
-sudo usermod -aG staf staf04
-sudo usermod -aG auditor auditor04
-id admin04 staf04 auditor04          # bukti keanggotaan
+sudo usermod -aG admin admin03
+sudo usermod -aG staf staf03
+sudo usermod -aG auditor auditor03
+id admin03 staf03 auditor03          # bukti keanggotaan
 
-# Struktur data (sementara dimiliki admin04 agar bisa diisi)
+# Struktur data (sementara dimiliki admin03 agar bisa diisi)
 sudo mkdir -p /data/public /data/internal /data/confidential/rekam_medis
-sudo chown -R admin04:admin /data
+sudo chown -R admin03:admin /data
 ```
 
-Logout lalu login lagi sebagai `admin04` supaya keanggotaan group `admin` aktif.
+Logout lalu login lagi sebagai `admin03` supaya keanggotaan group `admin` aktif.
 
 ### 3.6 Isi data dummy (≥ 20 baris, semua fiktif)
 
 ```bash
 cd /data/confidential
-echo "id_pasien,nama,email,telepon,alamat,layanan,tanggal_kunjungan,status_bayar" > data_pelanggan_kel04.csv
+echo "id_pasien,nama,email,telepon,alamat,layanan,tanggal_kunjungan,status_bayar" > data_pelanggan_kel03.csv
 for i in $(seq 1 25); do
   printf "P%03d,Pasien Fiktif %02d,pasien%02d@example.test,0812000%05d,Jl. Contoh No.%d Banda Aceh,Telekonsultasi,2026-10-%02d,%s\n" \
     $i $i $i $i $i $(( (i % 28) + 1 )) $( [ $((i % 3)) -eq 0 ] && echo Belum || echo Lunas ) \
-    >> data_pelanggan_kel04.csv
+    >> data_pelanggan_kel03.csv
 done
-wc -l data_pelanggan_kel04.csv       # harus 26 (1 header + 25 baris)
-head -5 data_pelanggan_kel04.csv
+wc -l data_pelanggan_kel03.csv       # harus 26 (1 header + 25 baris)
+head -5 data_pelanggan_kel03.csv
 ```
 
 Isi berkas pendukung agar tiap zona punya contoh:
@@ -319,7 +319,7 @@ Isi berkas pendukung agar tiap zona punya contoh:
 ```bash
 echo "Brosur layanan RDH - jam praktik 08.00-20.00 WIB (dummy)"      > /data/public/brosur_layanan.txt
 echo "SOP-01: Prosedur reset akun staf (dummy)"                      > /data/internal/sop_reset_akun.txt
-echo "2026-10-01 10:00 login admin04 sukses (dummy)"                 > /data/confidential/log_audit_dummy.txt
+echo "2026-10-01 10:00 login admin03 sukses (dummy)"                 > /data/confidential/log_audit_dummy.txt
 echo "P001 | Diagnosa: flu ringan | Catatan dokter: istirahat (DUMMY)" > /data/confidential/rekam_medis/rm_dummy.txt
 find /data -type f
 ```
@@ -329,7 +329,7 @@ find /data -type f
 Catat **hash dasar** sebagai bukti integritas awal (dipakai lagi di B4 untuk membuktikan restore sempurna):
 
 ```bash
-sha256sum /data/confidential/data_pelanggan_kel04.csv | tee ~/hash_dasar_kel04.txt
+sha256sum /data/confidential/data_pelanggan_kel03.csv | tee ~/hash_dasar_kel03.txt
 ```
 
 ---
@@ -367,44 +367,52 @@ Tabel (min. 8; di bawah 12 contoh yang sudah konsisten dengan C1):
 >
 > Catat juga: staf layanan pelanggan mengakses data pelanggan **lewat aplikasi**, bukan lewat file share server. Inilah alasan `staf` tidak punya akses langsung ke `/data/confidential`.
 
-### A2. Studi kasus: VPN Fortinet (karena 4 mod 4 = 0)
+### A2. Studi kasus: Serangan ransomware PDNS 2 (karena 3 mod 4 = 3 → PDN)
 
-**Keputusan tim:** kita fokus pada **kebocoran kredensial VPN FortiGate (Nov 2020)** yang berakar pada kerentanan **CVE-2018-13379**, dan menyebut kerentanan VPN Fortinet lain sebagai konteks pembanding.
+**Keputusan tim:** kita fokus pada **serangan ransomware terhadap Pusat Data Nasional Sementara (PDNS) 2 di Surabaya, Juni 2024**, dan menjadikan pelajaran *backup* dan *pertahanan berlapis* sebagai benang merah ke praktik B4, C, dan D.
 
-**Fakta pegangan** (sudah dicek dari pemberitaan; tetap baca sumbernya lalu tulis ulang dengan kata-katamu):
+**Fakta pegangan** (dicek dari pemberitaan dan keterangan pemerintah; baca sumbernya lalu tulis ulang dengan kata-katamu):
 
-- CVE-2018-13379 adalah celah *path traversal* pada portal web SSL-VPN FortiOS yang memungkinkan penyerang **tanpa autentikasi** mengunduh berkas sistem lewat permintaan HTTP yang dirancang khusus.
-- Fortinet merilis tambalan pada Mei 2019 dan mengingatkan pelanggan beberapa kali setelahnya.
-- Pada November 2020, seorang peretas menyebarkan daftar sekitar 50.000 alamat IP perangkat FortiGate yang masih rentan, lalu basis data besar berisi berkas sesi `sslvpn_websession` dengan username dan password (teks biasa) dari perangkat-perangkat itu. Disebutkan di antara korbannya institusi perbankan, telekomunikasi, dan pemerintah.
-- Meski perangkat kemudian ditambal, **kredensial yang sudah bocor tetap berisiko** dipakai untuk *credential stuffing*. Karena itu pengguna diminta mengganti password.
-- Fortinet sebelumnya juga memperingatkan bahwa kelompok ancaman tingkat negara memanfaatkan celah ini.
+- Menurut keterangan Menkominfo, gangguan pertama terdeteksi pada **17 Juni 2024**. Layanan PDNS 2 terganggu sejak **20 Juni 2024**.
+- Jenisnya **ransomware Brain Cipher**, yang oleh pemerintah dan pemberitaan disebut sebagai varian baru dari **LockBit 3.0**.
+- Pemerintah menyebut ada upaya **menonaktifkan Windows Defender** sejak malam 17 Juni, dan Defender sempat tidak berfungsi pada 20 Juni dini hari. Artinya pertahanan di server dilumpuhkan lebih dulu sebelum data dikunci.
+- Pelaku meminta tebusan **US$ 8 juta (sekitar Rp131 miliar)**, dilaporkan dalam kripto Monero.
+- Dampak: layanan publik terganggu, termasuk layanan **imigrasi**. Jumlah instansi terdampak disebut **239** dalam keterangan Menkominfo per 26 Juni 2024, dan angka yang lebih besar (**282**) muncul di pemberitaan lain. Karena angkanya berbeda-beda, tulis sumber dan tanggalnya.
+- Awal Juli 2024 kelompok pelaku menyatakan akan memberikan kunci dekripsi tanpa tebusan. Pemberitaan menyebut kunci itu hanya untuk satu jenis ransomware sementara ada ransomware lain yang juga menyerang, dan seorang pakar menyebut **pemulihan lama karena tidak ada pencadangan yang menyeluruh**.
+- Kementerian juga mengamankan server cadangan milik beberapa kementerian/lembaga yang punya backup sendiri untuk dievaluasi apakah ikut terinfeksi.
+
+> **Hati-hati dengan klaim yang belum jelas.** Vektor akses awal dan siapa yang bertanggung jawab penuh adalah bagian yang diperdebatkan di media. Kalau kamu membahasnya, tulis sebagai *dugaan/pernyataan pihak X* dan sebutkan sumbernya, jangan sebagai fakta.
 
 **Kerangka jawaban (isi dengan kalimatmu sendiri):**
 
-1. **Kronologi singkat.** Celah ditemukan, tambalan dirilis, perangkat banyak yang tidak ditambal, daftar IP dan kredensial bocor, dampaknya.
-2. **Analisis pelanggaran** (tabel di bawah). Jelaskan *siapa* pengendali data di kasus ini (organisasi pemilik perangkat), *siapa* subjek datanya (pengguna VPN).
-3. **Regulasi:** UU PDP (UU No. 27 Tahun 2022) dan GDPR; sebutkan juga satu kalimat perbandingan dengan CCPA.
-4. **Ancaman teknis:** eksploitasi kerentanan, *unauthenticated file read*, pencurian dan penyalahgunaan kredensial, *credential stuffing*, kegagalan *patch management*, penyimpanan kredensial yang terbaca, dan potensi pergerakan lateral/ransomware setelah masuk lewat VPN.
-5. **Tiga rekomendasi pencegahan**, lalu tunjukkan bahwa RDH menerapkannya di lab (ini nilai tambah).
+1. **Kronologi singkat:** deteksi, penonaktifan pertahanan, enkripsi, tuntutan tebusan, dampak layanan, pemulihan.
+2. **Analisis pelanggaran** (tabel di bawah). Tentukan *siapa* pengendali data (instansi pemilik data), *siapa* prosesor/pengelola pusat data, dan *siapa* subjek datanya (warga).
+3. **Regulasi:** UU PDP (UU No. 27 Tahun 2022) dan GDPR; satu kalimat perbandingan dengan CCPA.
+4. **Ancaman teknis:** ransomware (varian LockBit 3.0), *defense evasion* (mematikan antivirus), enkripsi data (*impact*), kemungkinan pemerasan ganda (ancaman membocorkan data, menurut pemberitaan), titik kegagalan tunggal (*single point of failure*) karena tak ada backup terpisah, dan cakupan dampak yang luas karena banyak instansi berbagi satu platform.
+5. **Tiga rekomendasi pencegahan**, lalu tunjukkan bahwa RDH menerapkannya di lab (nilai tambah).
+
+> **Nuansa yang menunjukkan analisis tajam:** UU PDP baru efektif penuh sejak **Oktober 2024** setelah masa transisi dua tahun, jadi saat serangan Juni 2024 ia belum bisa ditegakkan sepenuhnya. Jelaskan bahwa ia tetap menjadi *tolok ukur* kewajiban yang seharusnya dipenuhi, dan cari regulasi lain yang berlaku saat itu (misalnya ketentuan penyelenggaraan sistem elektronik) dan verifikasi nomornya sendiri.
 
 **Tabel analisis (kerangka):**
 
 | Aspek | Pertanyaan yang kamu jawab | Hubungan regulasi (verifikasi pasalnya) |
 |---|---|---|
-| Persetujuan | Apakah pengguna VPN menyetujui datanya terpapar? Apa dasar pemrosesan kredensial mereka? | UU PDP Pasal 20 (dasar pemrosesan); GDPR Art. 6 |
-| Transparansi | Apakah organisasi pemilik perangkat memberi tahu pengguna dan regulator dengan jelas dan tepat waktu? | UU PDP Pasal 21 dan 46; GDPR Art. 12–14, 33–34 |
-| Akuntabilitas | Tambalan sudah ada sejak 2019, mengapa belum dipasang? Siapa yang bertanggung jawab? | UU PDP Pasal 47 (pembuktian pemenuhan kewajiban) dan pasal keamanan (Pasal 35, 39); GDPR Art. 5(2), 32 |
-| Keadilan | Pengguna biasa tidak bersalah tetapi menanggung risiko akun dibajak. Adil? | Prinsip pemrosesan yang sah dan adil (GDPR Art. 5(1)(a)) |
+| Persetujuan | Warga tidak memilih menyimpan datanya di PDN. Apa dasar pemrosesannya (layanan publik/kewajiban hukum)? Apakah tujuan dan batasnya jelas? | UU PDP Pasal 20 (dasar pemrosesan); GDPR Art. 6 |
+| Transparansi | Apakah warga dan regulator diberi tahu secara jelas, tertulis, dan tepat waktu tentang apa yang terjadi dan data apa yang terdampak? | UU PDP Pasal 21 dan 46; GDPR Art. 12–14, 33–34 |
+| Akuntabilitas | Siapa yang bertanggung jawab atas keamanan dan ketersediaan data? Mengapa pencadangan tidak memadai? Siapa yang harus membuktikan kepatuhan? | UU PDP Pasal 47 dan pasal keamanan (Pasal 35, 39); GDPR Art. 5(2), 28, 32 |
+| Keadilan | Warga tidak berbuat salah tetapi menanggung layanan terhenti dan risiko datanya. Adil? Siapa menanggung biayanya? | Prinsip pemrosesan yang sah dan adil (GDPR Art. 5(1)(a)) |
 
-**Tiga rekomendasi yang masuk akal (jadikan contoh arah, jangan disalin):**
+> Tautan teknis yang kuat dengan GDPR: **Art. 32(1)(c)** mengharuskan kemampuan memulihkan ketersediaan dan akses data secara tepat waktu setelah insiden. Ini hampir persis menjadi inti pelajaran PDN dan menjadi landasan B4.
+
+**Tiga rekomendasi yang masuk akal (arah saja, jangan disalin):**
 
 | Rekomendasi | Mencegah apa | Diterapkan RDH di |
 |---|---|---|
-| **Patch management** terjadwal untuk gateway VPN dan server (pemindaian kerentanan, SLA tambalan) | Eksploitasi celah yang sudah diketahui | Kebijakan #10; tambahkan `apt update/upgrade` ke SOP (opsional) |
-| **MFA** untuk setiap akses jarak jauh dan **reset kredensial** setelah dugaan bocor | Penyalahgunaan kredensial yang dicuri | C2 (key + TOTP), D1 |
-| **Perkecil permukaan serangan dan pantau**: akses admin hanya lewat VPN, firewall default deny, log dipantau, segmentasi | Penyerang yang berhasil masuk lewat VPN bergerak bebas | C4, C5, D1 |
+| **Backup 3-2-1 yang terisolasi dan terenkripsi**, dengan **uji restore** berkala dan target RPO/RTO yang jelas | Data hilang permanen atau pemulihan berbulan-bulan | B4 |
+| **Pertahanan berlapis dan pemantauan**: least privilege, MFA untuk admin, firewall default deny, akses admin lewat VPN, peringatan bila fitur keamanan dimatikan, segmentasi | Penyerang mendapat pijakan lalu mematikan pertahanan dan menyebar | C1, C2, C4, C5, D1 |
+| **Kesiapan respons insiden dan komunikasi**: CSIRT, runbook, latihan *tabletop*, notifikasi tertulis ≤ 3×24 jam bila terjadi kegagalan pelindungan data | Respons lambat, kacau, dan tidak transparan | D2 |
 
-**Perbandingan singkat tiga regulasi** (untuk menjawab capaian pembelajaran nomor 2):
+**Perbandingan singkat tiga regulasi** (untuk capaian pembelajaran nomor 2):
 
 | Aspek | UU PDP (Indonesia) | GDPR (UE) | CCPA (California) |
 |---|---|---|---|
@@ -464,13 +472,13 @@ KEBIJAKAN PRIVASI — RENCONG DIGITAL HEALTH (RDH)
 ## 5. Bagian B — Enkripsi, Integritas, dan Backup
 
 > **Cerita fase ini:** *"Kalau data dicuri atau rusak, apa yang tetap aman?"*
-> Dikerjakan di **VM server** sebagai `admin04`. Pastikan prompt memperlihatkan `admin04@kdi-kel04-srv`.
+> Dikerjakan di **VM server** sebagai `admin03`. Pastikan prompt memperlihatkan `admin03@kdi-kel03-srv`.
 
 Siapkan folder kerja agar tidak mengacak data asli:
 
 ```bash
 mkdir -p ~/lab_kripto
-cp /data/confidential/data_pelanggan_kel04.csv ~/lab_kripto/
+cp /data/confidential/data_pelanggan_kel03.csv ~/lab_kripto/
 cd ~/lab_kripto
 ls -l
 ```
@@ -481,19 +489,19 @@ ls -l
 
 ```bash
 # 1) Enkripsi (diminta passphrase dua kali; SENSOR di laporan)
-openssl enc -aes-256-cbc -pbkdf2 -salt -in data_pelanggan_kel04.csv -out data_pelanggan_kel04.csv.enc
+openssl enc -aes-256-cbc -pbkdf2 -salt -in data_pelanggan_kel03.csv -out data_pelanggan_kel03.csv.enc
 
 # 2) Bukti: isi berkas .enc tidak terbaca
-file data_pelanggan_kel04.csv.enc
-head -c 120 data_pelanggan_kel04.csv.enc | xxd | head -5
+file data_pelanggan_kel03.csv.enc
+head -c 120 data_pelanggan_kel03.csv.enc | xxd | head -5
 # bandingkan dengan aslinya:
-head -3 data_pelanggan_kel04.csv
+head -3 data_pelanggan_kel03.csv
 
 # 3) Dekripsi
-openssl enc -d -aes-256-cbc -pbkdf2 -in data_pelanggan_kel04.csv.enc -out hasil_dekripsi.csv
+openssl enc -d -aes-256-cbc -pbkdf2 -in data_pelanggan_kel03.csv.enc -out hasil_dekripsi.csv
 
 # 4) Buktikan hasilnya identik dengan aslinya
-diff data_pelanggan_kel04.csv hasil_dekripsi.csv && echo "IDENTIK: dekripsi sukses"
+diff data_pelanggan_kel03.csv hasil_dekripsi.csv && echo "IDENTIK: dekripsi sukses"
 ```
 
 **Apa yang harus terlihat di screenshot:** (1) perintah enkripsi, (2) isi `.enc` berupa karakter acak (dibanding CSV asli yang terbaca), (3) dekripsi + pesan `IDENTIK`.
@@ -507,7 +515,7 @@ diff data_pelanggan_kel04.csv hasil_dekripsi.csv && echo "IDENTIK: dekripsi suks
 
 ### B2. Enkripsi asimetris dan tanda tangan digital (GPG)
 
-**Skenario RDH:** `admin04` mengirim berkas pelanggan ke `auditor04` untuk audit tahunan, dengan persetujuan DPO. Berkas harus **rahasia** di jalan (dienkripsi untuk auditor) dan **asli** (ditandatangani admin).
+**Skenario RDH:** `admin03` mengirim berkas pelanggan ke `auditor03` untuk audit tahunan, dengan persetujuan DPO. Berkas harus **rahasia** di jalan (dienkripsi untuk auditor) dan **asli** (ditandatangani admin).
 
 **Pengaturan jalur pertukaran** (folder bersama yang bisa ditulis siapa saja, seperti "kotak surat"):
 
@@ -519,67 +527,67 @@ sudo chmod 1777 /srv/pertukaran      # sticky bit: tiap user hanya bisa hapus be
 **1) Buat key pair masing-masing.**
 
 ```bash
-# sebagai admin04 (user yang sedang login)
+# sebagai admin03 (user yang sedang login)
 export GPG_TTY=$(tty)
 gpg --full-generate-key
 #  Pilih: (1) RSA and RSA → 3072 atau 4096 bit → masa berlaku 1y
-#  Nama: admin04 RDH, Email: admin04@rdh.example.test, lalu passphrase (SENSOR)
+#  Nama: admin03 RDH, Email: admin03@rdh.example.test, lalu passphrase (SENSOR)
 gpg --list-keys
 ```
 ```bash
-# pindah menjadi auditor04
-sudo -iu auditor04
+# pindah menjadi auditor03
+sudo -iu auditor03
 export GPG_TTY=$(tty)
 gpg --full-generate-key
-#  Nama: auditor04 RDH, Email: auditor04@rdh.example.test
+#  Nama: auditor03 RDH, Email: auditor03@rdh.example.test
 gpg --list-keys
-exit            # kembali ke admin04
+exit            # kembali ke admin03
 ```
 
 **2) Tukar public key** (public key aman dibagikan, private key tidak pernah keluar):
 
 ```bash
-# admin04: ekspor public key sendiri
-gpg --armor --export admin04@rdh.example.test > /srv/pertukaran/admin04.pub
+# admin03: ekspor public key sendiri
+gpg --armor --export admin03@rdh.example.test > /srv/pertukaran/admin03.pub
 
-# auditor04: ekspor public key sendiri
-sudo -iu auditor04 bash -c 'gpg --armor --export auditor04@rdh.example.test > /srv/pertukaran/auditor04.pub'
+# auditor03: ekspor public key sendiri
+sudo -iu auditor03 bash -c 'gpg --armor --export auditor03@rdh.example.test > /srv/pertukaran/auditor03.pub'
 
-# admin04: impor public key auditor
-gpg --import /srv/pertukaran/auditor04.pub
+# admin03: impor public key auditor
+gpg --import /srv/pertukaran/auditor03.pub
 
-# auditor04: impor public key admin
-sudo -iu auditor04 gpg --import /srv/pertukaran/admin04.pub
+# auditor03: impor public key admin
+sudo -iu auditor03 gpg --import /srv/pertukaran/admin03.pub
 ```
 
 **3) Verifikasi fingerprint dan percayai key.** Ini langkah anti-pemalsuan: kalau penyerang menukar public key di jalan (MITM), fingerprint-nya akan berbeda.
 
 ```bash
-gpg --fingerprint auditor04@rdh.example.test            # catat fingerprint
-sudo -iu auditor04 gpg --fingerprint auditor04@rdh.example.test   # bandingkan: harus sama
-gpg --edit-key auditor04@rdh.example.test
+gpg --fingerprint auditor03@rdh.example.test            # catat fingerprint
+sudo -iu auditor03 gpg --fingerprint auditor03@rdh.example.test   # bandingkan: harus sama
+gpg --edit-key auditor03@rdh.example.test
 #   gpg> trust    → pilih 5 (ultimate) → y → quit
 
-sudo -iu auditor04 gpg --edit-key admin04@rdh.example.test
+sudo -iu auditor03 gpg --edit-key admin03@rdh.example.test
 #   gpg> trust    → 5 → y → quit
 ```
 
 **4) Pengirim mengenkripsi sekaligus menandatangani:**
 
 ```bash
-gpg --encrypt --sign -r auditor04@rdh.example.test \
-    -o /srv/pertukaran/data_pelanggan_kel04.csv.gpg \
-    ~/lab_kripto/data_pelanggan_kel04.csv
+gpg --encrypt --sign -r auditor03@rdh.example.test \
+    -o /srv/pertukaran/data_pelanggan_kel03.csv.gpg \
+    ~/lab_kripto/data_pelanggan_kel03.csv
 ls -l /srv/pertukaran
 ```
 
 **5) Penerima mendekripsi dan memverifikasi:**
 
 ```bash
-sudo -iu auditor04
+sudo -iu auditor03
 export GPG_TTY=$(tty)
-gpg -o hasil_gpg.csv --decrypt /srv/pertukaran/data_pelanggan_kel04.csv.gpg
-# Harus muncul: gpg: Good signature from "admin04 RDH <admin04@rdh.example.test>"
+gpg -o hasil_gpg.csv --decrypt /srv/pertukaran/data_pelanggan_kel03.csv.gpg
+# Harus muncul: gpg: Good signature from "admin03 RDH <admin03@rdh.example.test>"
 head -3 hasil_gpg.csv
 exit
 ```
@@ -587,8 +595,8 @@ exit
 **6) Bukti kerahasiaan: pihak lain tidak bisa membuka** (nilai tambah dan mudah didemokan):
 
 ```bash
-sudo -iu staf04 gpg --decrypt /srv/pertukaran/data_pelanggan_kel04.csv.gpg
-# Hasil: gpg: decrypt_message failed: No secret key  → staf04 tidak punya kunci privat penerima
+sudo -iu staf03 gpg --decrypt /srv/pertukaran/data_pelanggan_kel03.csv.gpg
+# Hasil: gpg: decrypt_message failed: No secret key  → staf03 tidak punya kunci privat penerima
 ```
 
 **Perbandingan B1 vs B2** (masukkan ke laporan):
@@ -611,19 +619,19 @@ sudo -iu staf04 gpg --decrypt /srv/pertukaran/data_pelanggan_kel04.csv.gpg
 cd ~/lab_kripto
 
 # 1) Hash berkas asli
-sha256sum data_pelanggan_kel04.csv | tee hash_asli.txt
+sha256sum data_pelanggan_kel03.csv | tee hash_asli.txt
 
 # 2) Ubah SATU karakter pada salinan, hitung ulang
-cp data_pelanggan_kel04.csv uji_integritas.csv
+cp data_pelanggan_kel03.csv uji_integritas.csv
 sed -i '2s/./X/' uji_integritas.csv          # ganti karakter pertama baris 2
-diff <(sed -n '2p' data_pelanggan_kel04.csv) <(sed -n '2p' uji_integritas.csv)
+diff <(sed -n '2p' data_pelanggan_kel03.csv) <(sed -n '2p' uji_integritas.csv)
 sha256sum uji_integritas.csv                 # hash sama sekali berbeda
 ```
 
 **Verifikasi tanda tangan GPG gagal setelah file diubah:**
 
 ```bash
-cp data_pelanggan_kel04.csv uji_ttd.csv
+cp data_pelanggan_kel03.csv uji_ttd.csv
 gpg --armor --detach-sign uji_ttd.csv        # menghasilkan uji_ttd.csv.asc (tanda tangan terpisah)
 gpg --verify uji_ttd.csv.asc uji_ttd.csv     # → Good signature
 
@@ -640,8 +648,8 @@ gpg --verify uji_ttd.csv.asc uji_ttd.csv     # → BAD signature
 **1) Simpan passphrase backup di berkas terlindungi** (hanya untuk lab dummy):
 
 ```bash
-sudo bash -c 'echo "PassBackupDummy-Kel04" > /root/.backup_pass_kel04'
-sudo chmod 600 /root/.backup_pass_kel04
+sudo bash -c 'echo "PassBackupDummy-Kel03" > /root/.backup_pass_kel03'
+sudo chmod 600 /root/.backup_pass_kel03
 sudo mkdir -p /var/backups/rencong
 sudo chown root:admin /var/backups/rencong
 sudo chmod 750 /var/backups/rencong
@@ -654,16 +662,16 @@ sudo nano /usr/local/bin/backup.sh
 ```
 ```bash
 #!/bin/bash
-# backup.sh - Rencong Digital Health (Kelompok 4)
+# backup.sh - Rencong Digital Health (Kelompok 3)
 # Arsip folder /data -> enkripsi AES-256 -> nama berstempel waktu
 set -euo pipefail
 
 SRC_DIR="/data"
 DEST="/var/backups/rencong"
-PASSFILE="/root/.backup_pass_kel04"
+PASSFILE="/root/.backup_pass_kel03"
 TS=$(date +%Y%m%d_%H%M%S)
-ARSIP="/tmp/backup_kel04_${TS}.tar.gz"
-HASIL="${DEST}/backup_kel04_${TS}.tar.gz.enc"
+ARSIP="/tmp/backup_kel03_${TS}.tar.gz"
+HASIL="${DEST}/backup_kel03_${TS}.tar.gz.enc"
 
 # 1. Arsipkan (sertakan ACL dan atribut agar izin ikut pulih)
 tar --acls --xattrs -czf "$ARSIP" -C / "${SRC_DIR#/}"
@@ -677,16 +685,16 @@ chown root:admin "$HASIL"
 chmod 640 "$HASIL"
 
 # 4. Retensi: hapus backup lebih dari 7 hari
-find "$DEST" -name 'backup_kel04_*.enc' -mtime +7 -delete
+find "$DEST" -name 'backup_kel03_*.enc' -mtime +7 -delete
 
 # 5. Catat di log
-echo "[$(date '+%F %T')] Backup selesai: $HASIL" >> /var/log/backup_kel04.log
+echo "[$(date '+%F %T')] Backup selesai: $HASIL" >> /var/log/backup_kel03.log
 ```
 ```bash
 sudo chmod +x /usr/local/bin/backup.sh
 sudo /usr/local/bin/backup.sh                   # uji manual
 ls -l /var/backups/rencong
-sudo tail /var/log/backup_kel04.log
+sudo tail /var/log/backup_kel03.log
 ```
 
 **3) Jadwalkan dengan cron:**
@@ -703,10 +711,10 @@ Tambahkan **satu** baris (untuk demo, tiap 2 menit):
 **4) Salin ke VM klien sebagai salinan terpisah** (dijalankan dari klien, SSH masih port 22 pada tahap ini):
 
 ```bash
-# di kdi-kel04-cli
+# di kdi-kel03-cli
 mkdir -p ~/backup_rdh
-scp admin04@192.168.56.104:/var/backups/rencong/backup_kel04_*.enc ~/backup_rdh/
-ls -l ~/backup_rdh       # bukti salinan terpisah (prompt harus kdi-kel04-cli)
+scp admin03@192.168.56.103:/var/backups/rencong/backup_kel03_*.enc ~/backup_rdh/
+ls -l ~/backup_rdh       # bukti salinan terpisah (prompt harus kdi-kel03-cli)
 ```
 
 **5) Simulasi bencana dan pemulihan:**
@@ -720,18 +728,18 @@ ls /data                                  # "No such file or directory"
 ```bash
 # di klien: kirim salinan backup terbaru kembali ke server
 FILE=$(ls -t ~/backup_rdh/*.enc | head -1)
-scp "$FILE" admin04@192.168.56.104:/tmp/restore.tar.gz.enc
+scp "$FILE" admin03@192.168.56.103:/tmp/restore.tar.gz.enc
 ```
 ```bash
 # di server: dekripsi dan pulihkan
-sudo openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/root/.backup_pass_kel04 \
+sudo openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/root/.backup_pass_kel03 \
      -in /tmp/restore.tar.gz.enc -out /tmp/restore.tar.gz
 sudo tar --acls --xattrs -xzf /tmp/restore.tar.gz -C /
 sudo rm -f /tmp/restore.tar.gz /tmp/restore.tar.gz.enc
 
 # bukti pulih sempurna: hash sama dengan hash dasar di 3.6
-sha256sum /data/confidential/data_pelanggan_kel04.csv
-cat ~/hash_dasar_kel04.txt
+sha256sum /data/confidential/data_pelanggan_kel03.csv
+cat ~/hash_dasar_kel03.txt
 ```
 Kedua hash harus sama, itulah bukti integritas hasil restore.
 
@@ -816,31 +824,31 @@ getfacl /data/confidential/rekam_medis
 
 | User | Direktori | Prediksi baca | Prediksi tulis | Hasil baca | Hasil tulis | Sesuai? |
 |---|---|---|---|---|---|---|
-| admin04 | /data/public | Ya | Ya | | | |
-| admin04 | /data/internal | Ya | Ya | | | |
-| admin04 | /data/confidential | Ya | Ya | | | |
-| staf04 | /data/public | Ya | Tidak | | | |
-| staf04 | /data/internal | Ya | Ya | | | |
-| staf04 | /data/confidential | Tidak | Tidak | | | |
-| auditor04 | /data/public | Ya | Tidak | | | |
-| auditor04 | /data/internal | Ya | Tidak | | | |
-| auditor04 | /data/confidential | Ya | Tidak | | | |
-| *(tambahan)* auditor04 | /data/confidential/rekam_medis | Tidak | Tidak | | | |
+| admin03 | /data/public | Ya | Ya | | | |
+| admin03 | /data/internal | Ya | Ya | | | |
+| admin03 | /data/confidential | Ya | Ya | | | |
+| staf03 | /data/public | Ya | Tidak | | | |
+| staf03 | /data/internal | Ya | Ya | | | |
+| staf03 | /data/confidential | Tidak | Tidak | | | |
+| auditor03 | /data/public | Ya | Tidak | | | |
+| auditor03 | /data/internal | Ya | Tidak | | | |
+| auditor03 | /data/confidential | Ya | Tidak | | | |
+| *(tambahan)* auditor03 | /data/confidential/rekam_medis | Tidak | Tidak | | | |
 
 **3) Uji dengan `sudo -u`:**
 
 ```bash
 # BACA
-sudo -u admin04   ls /data/confidential
-sudo -u staf04    ls /data/confidential              # → Permission denied
-sudo -u auditor04 ls /data/confidential              # → berhasil
-sudo -u auditor04 ls /data/confidential/rekam_medis  # → Permission denied
+sudo -u admin03   ls /data/confidential
+sudo -u staf03    ls /data/confidential              # → Permission denied
+sudo -u auditor03 ls /data/confidential              # → berhasil
+sudo -u auditor03 ls /data/confidential/rekam_medis  # → Permission denied
 
 # TULIS
-sudo -u staf04    touch /data/internal/uji_staf.txt        # berhasil
-sudo -u auditor04 touch /data/internal/uji_auditor.txt     # → Permission denied
-sudo -u admin04   touch /data/confidential/uji_admin.txt   # berhasil
-sudo -u staf04    touch /data/public/uji_staf.txt          # → Permission denied
+sudo -u staf03    touch /data/internal/uji_staf.txt        # berhasil
+sudo -u auditor03 touch /data/internal/uji_auditor.txt     # → Permission denied
+sudo -u admin03   touch /data/confidential/uji_admin.txt   # berhasil
+sudo -u staf03    touch /data/public/uji_staf.txt          # → Permission denied
 ```
 
 Ulangi sampai semua baris tabel tercakup, screenshot tiap kelompok pengujian, lalu isi kolom hasil. **Jika hasil tidak sesuai prediksi, jangan disembunyikan.** Perbaiki konfigurasi atau jelaskan penyebabnya; analisis itu bernilai.
@@ -858,13 +866,13 @@ Bersihkan berkas uji: `sudo rm -f /data/internal/uji_*.txt /data/confidential/uj
 **1) Buat kunci SSH di klien dan salin ke server** (masih port 22):
 
 ```bash
-# di kdi-kel04-cli
-ssh-keygen -t ed25519 -C "admin04@kdi-kel04-cli"      # isi passphrase (SENSOR)
-ssh-copy-id admin04@192.168.56.104
-ssh admin04@192.168.56.104                             # uji masuk dengan kunci
+# di kdi-kel03-cli
+ssh-keygen -t ed25519 -C "admin03@kdi-kel03-cli"      # isi passphrase (SENSOR)
+ssh-copy-id admin03@192.168.56.103
+ssh admin03@192.168.56.103                             # uji masuk dengan kunci
 ```
 
-**2) Aktifkan TOTP untuk `admin04` di server:**
+**2) Aktifkan TOTP untuk `admin03` di server:**
 
 ```bash
 google-authenticator
@@ -899,14 +907,14 @@ sudo nano /etc/ssh/sshd_config
 ```
 Pastikan baris berikut aktif dan tidak tertimpa:
 ```
-Port 2204
+Port 2203
 PermitRootLogin no
 PubkeyAuthentication yes
 PasswordAuthentication no
 KbdInteractiveAuthentication yes
 UsePAM yes
 AuthenticationMethods publickey,keyboard-interactive
-AllowUsers admin04
+AllowUsers admin03
 ```
 
 Cek agar tidak ada berkas lain yang menimpa, lalu uji sintaks:
@@ -924,21 +932,21 @@ sudo systemctl daemon-reload
 sudo systemctl disable --now ssh.socket
 sudo systemctl enable --now ssh
 sudo systemctl restart ssh
-ss -tlnp | grep 2204          # harus listening di port 2204
+ss -tlnp | grep 2203          # harus listening di port 2203
 ```
 
 **6) Uji dari klien (sesi lama tetap terbuka):**
 
 ```bash
-ssh -p 2204 admin04@192.168.56.104
+ssh -p 2203 admin03@192.168.56.103
 #   (passphrase kunci jika ada) → "Verification code:" → kode 6 digit dari ponsel
 ```
 
 Bukti yang diminta:
 1. Login berhasil setelah memasukkan kunci **dan** kode TOTP.
-2. `ssh -p 2204 root@192.168.56.104` ditolak.
-3. `ssh -p 2204 -o PubkeyAuthentication=no admin04@192.168.56.104` ditolak (tanpa kunci tidak bisa masuk).
-4. `ssh -p 22 admin04@192.168.56.104` gagal (port lama sudah tidak dipakai).
+2. `ssh -p 2203 root@192.168.56.103` ditolak.
+3. `ssh -p 2203 -o PubkeyAuthentication=no admin03@192.168.56.103` ditolak (tanpa kunci tidak bisa masuk).
+4. `ssh -p 22 admin03@192.168.56.103` gagal (port lama sudah tidak dipakai).
 
 **Faktor autentikasi yang dipakai:**
 
@@ -959,15 +967,15 @@ Bukti yang diminta:
 
 ```bash
 sudo mkdir -p /var/www/portal/secure
-echo "<h1>Portal Internal RDH (kdi-kel04-srv)</h1>" | sudo tee /var/www/portal/secure/index.html
-sudo htpasswd -c /etc/nginx/.htpasswd userdummy        # password dummy, mis. PassDummy-04
+echo "<h1>Portal Internal RDH (kdi-kel03-srv)</h1>" | sudo tee /var/www/portal/secure/index.html
+sudo htpasswd -c /etc/nginx/.htpasswd userdummy        # password dummy, mis. PassDummy-03
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nano /etc/nginx/sites-available/portal-rdh
 ```
 ```nginx
 server {
     listen 80;
-    server_name kdi-kel04-srv;
+    server_name kdi-kel03-srv;
     root /var/www/portal;
     index index.html;
 
@@ -980,13 +988,13 @@ server {
 ```bash
 sudo ln -s /etc/nginx/sites-available/portal-rdh /etc/nginx/sites-enabled/portal-rdh
 sudo nginx -t && sudo systemctl reload nginx
-curl -i -u userdummy:PassDummy-04 http://192.168.56.104/secure/     # uji dari klien (harus 200 OK)
+curl -i -u userdummy:PassDummy-03 http://192.168.56.103/secure/     # uji dari klien (harus 200 OK)
 ```
 
 **2) Rekam lalu lintas HTTP di Wireshark (klien):**
 
 1. Buka Wireshark, pilih interface **enp0s8** (Host-only), klik **Start**.
-2. Di terminal klien: `curl -u userdummy:PassDummy-04 http://192.168.56.104/secure/` (atau login lewat browser).
+2. Di terminal klien: `curl -u userdummy:PassDummy-03 http://192.168.56.103/secure/` (atau login lewat browser).
 3. Isi filter `http.authbasic` (atau `http`).
 4. Klik paket `GET /secure/` → perluas **Hypertext Transfer Protocol → Authorization: Basic ...**. Wireshark menampilkan **Credentials: userdummy:...** dalam teks terbaca.
 5. Alternatif bukti yang kuat: klik kanan paket → **Follow → TCP Stream**. Seluruh percakapan HTTP terbaca.
@@ -998,11 +1006,11 @@ curl -i -u userdummy:PassDummy-04 http://192.168.56.104/secure/     # uji dari k
 
 ```bash
 sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/ssl/private/kdi-kel04.key \
-  -out /etc/ssl/certs/kdi-kel04.crt \
-  -subj "/C=ID/ST=Aceh/L=Banda Aceh/O=Rencong Digital Health/CN=kdi-kel04-srv" \
-  -addext "subjectAltName=DNS:kdi-kel04-srv,IP:192.168.56.104"
-sudo chmod 600 /etc/ssl/private/kdi-kel04.key
+  -keyout /etc/ssl/private/kdi-kel03.key \
+  -out /etc/ssl/certs/kdi-kel03.crt \
+  -subj "/C=ID/ST=Aceh/L=Banda Aceh/O=Rencong Digital Health/CN=kdi-kel03-srv" \
+  -addext "subjectAltName=DNS:kdi-kel03-srv,IP:192.168.56.103"
+sudo chmod 600 /etc/ssl/private/kdi-kel03.key
 
 sudo nano /etc/nginx/sites-available/portal-rdh
 ```
@@ -1010,12 +1018,12 @@ Tambahkan blok kedua di bawah blok port 80:
 ```nginx
 server {
     listen 443 ssl;
-    server_name kdi-kel04-srv;
+    server_name kdi-kel03-srv;
     root /var/www/portal;
     index index.html;
 
-    ssl_certificate     /etc/ssl/certs/kdi-kel04.crt;
-    ssl_certificate_key /etc/ssl/private/kdi-kel04.key;
+    ssl_certificate     /etc/ssl/certs/kdi-kel03.crt;
+    ssl_certificate_key /etc/ssl/private/kdi-kel03.key;
     ssl_protocols       TLSv1.2 TLSv1.3;
 
     location /secure/ {
@@ -1031,7 +1039,7 @@ sudo nginx -t && sudo systemctl reload nginx
 **4) Rekam ulang lewat HTTPS (klien):**
 
 1. Mulai capture baru di Wireshark (enp0s8).
-2. `curl -k -u userdummy:PassDummy-04 https://192.168.56.104/secure/` (`-k` karena sertifikat self-signed).
+2. `curl -k -u userdummy:PassDummy-03 https://192.168.56.103/secure/` (`-k` karena sertifikat self-signed).
 3. Filter `tls`: terlihat *Client Hello*, *Server Hello*, lalu **Application Data** yang tak terbaca. Filter `http.authbasic` kini **kosong**. *Follow TLS Stream* hanya menampilkan data acak.
 4. Screenshot dan simpan `https_capture.pcapng`.
 
@@ -1056,16 +1064,16 @@ sudo nginx -t && sudo systemctl reload nginx
 **1) Nmap SEBELUM aturan** (dari klien):
 
 ```bash
-nmap -p 22,80,443,2204 192.168.56.104
+nmap -p 22,80,443,2203 192.168.56.103
 ```
-Perkiraan: `22` closed (SSH sudah pindah), `80` open, `443` open, `2204` open. Screenshot.
+Perkiraan: `22` closed (SSH sudah pindah), `80` open, `443` open, `2203` open. Screenshot.
 
 **2) Terapkan aturan di server.** Izinkan SSH **sebelum** `enable` agar tidak terkunci:
 
 ```bash
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow from 192.168.56.154 to any port 2204 proto tcp    # SSH hanya dari klien
+sudo ufw allow from 192.168.56.153 to any port 2203 proto tcp    # SSH hanya dari klien
 sudo ufw allow from 192.168.56.0/24 to any port 443 proto tcp    # HTTPS dari subnet Host-only
 sudo ufw deny 80/tcp                                             # HTTP diblokir
 sudo ufw enable
@@ -1075,16 +1083,16 @@ sudo ufw status numbered
 **3) Nmap SESUDAH aturan** (dari klien):
 
 ```bash
-nmap -p 22,80,443,2204 192.168.56.104
+nmap -p 22,80,443,2203 192.168.56.103
 ```
-Perkiraan: `22` dan `80` **filtered** (paket di-drop), `443` open, `2204` open (karena berasal dari IP klien yang diizinkan).
+Perkiraan: `22` dan `80` **filtered** (paket di-drop), `443` open, `2203` open (karena berasal dari IP klien yang diizinkan).
 
 | Port | Sebelum UFW | Sesudah UFW | Penjelasan |
 |---|---|---|---|
 | 22 | closed | filtered | Tak ada layanan; kini juga di-drop firewall |
 | 80 | open | filtered | HTTP diblokir sesuai kebijakan |
 | 443 | open | open | Diizinkan dari subnet Host-only |
-| 2204 | open | open | Diizinkan hanya dari `192.168.56.154` |
+| 2203 | open | open | Diizinkan hanya dari `192.168.56.153` |
 
 > Bedakan **closed** (port menjawab "tidak ada layanan") dan **filtered** (tidak ada jawaban karena di-drop firewall). Itu bagian dari analisis.
 
@@ -1092,7 +1100,7 @@ Perkiraan: `22` dan `80` **filtered** (paket di-drop), `443` open, `2204` open (
 
 ### C5. VPN WireGuard
 
-**Cerita:** pelajaran Fortinet: akses jarak jauh harus lewat gerbang yang kuat dan sempit. Kita jadikan VPN **satu-satunya jalur** menuju SSH.
+**Cerita:** pelajaran PDN: semakin sempit pintu masuk administrasi, semakin kecil peluang penyerang. Kita jadikan VPN **satu-satunya jalur** menuju SSH.
 
 > Ambil snapshot `s3-sebelum-vpn`.
 
@@ -1111,26 +1119,26 @@ sudo nano /etc/wireguard/wg0.conf
 ```
 ```ini
 [Interface]
-Address = 10.10.4.1/24
+Address = 10.10.3.1/24
 ListenPort = 51820
 PrivateKey = <ISI_PRIVATE_KEY_SERVER>
 
 [Peer]
 PublicKey = <ISI_PUBLIC_KEY_KLIEN>
-AllowedIPs = 10.10.4.2/32
+AllowedIPs = 10.10.3.2/32
 ```
 
 **3) Konfigurasi klien** `/etc/wireguard/wg0.conf`:
 
 ```ini
 [Interface]
-Address = 10.10.4.2/24
+Address = 10.10.3.2/24
 PrivateKey = <ISI_PRIVATE_KEY_KLIEN>
 
 [Peer]
 PublicKey = <ISI_PUBLIC_KEY_SERVER>
-Endpoint = 192.168.56.104:51820
-AllowedIPs = 10.10.4.0/24
+Endpoint = 192.168.56.103:51820
+AllowedIPs = 10.10.3.0/24
 PersistentKeepalive = 25
 ```
 ```bash
@@ -1141,14 +1149,14 @@ sudo chmod 600 /etc/wireguard/wg0.conf     # di server dan klien
 
 ```bash
 # server
-sudo ufw allow from 192.168.56.154 to any port 51820 proto udp
+sudo ufw allow from 192.168.56.153 to any port 51820 proto udp
 sudo systemctl enable --now wg-quick@wg0
 sudo wg show
 
 # klien
 sudo systemctl enable --now wg-quick@wg0
 sudo wg show
-ping -c 3 10.10.4.1
+ping -c 3 10.10.3.1
 ```
 Bukti: `wg show` memperlihatkan **latest handshake**, dan ping berhasil.
 
@@ -1156,11 +1164,11 @@ Bukti: `wg show` memperlihatkan **latest handshake**, dan ping berhasil.
 
 ```bash
 # klien: pastikan jalur VPN berfungsi (key + TOTP)
-ssh -p 2204 admin04@10.10.4.1
+ssh -p 2203 admin03@10.10.3.1
 
 # server (di sesi VPN tadi atau konsol VirtualBox):
-sudo ufw allow from 10.10.4.0/24 to any port 2204 proto tcp
-sudo ufw delete allow from 192.168.56.154 to any port 2204 proto tcp   # cabut jalur lama
+sudo ufw allow from 10.10.3.0/24 to any port 2203 proto tcp
+sudo ufw delete allow from 192.168.56.153 to any port 2203 proto tcp   # cabut jalur lama
 sudo ufw status numbered
 ```
 
@@ -1170,20 +1178,20 @@ sudo ufw status numbered
 **6) Uji dari klien:**
 
 ```bash
-ssh -p 2204 -o ConnectTimeout=5 admin04@192.168.56.104    # lewat Host-only → timeout/ditolak
-ssh -p 2204 admin04@10.10.4.1                              # lewat VPN → berhasil (key + TOTP)
+ssh -p 2203 -o ConnectTimeout=5 admin03@192.168.56.103    # lewat Host-only → timeout/ditolak
+ssh -p 2203 admin03@10.10.3.1                              # lewat VPN → berhasil (key + TOTP)
 ```
 
 **7) Rekam Wireshark (klien, interface enp0s8):**
 
-1. Mulai capture, lalu lakukan SSH lewat `10.10.4.1`.
+1. Mulai capture, lalu lakukan SSH lewat `10.10.3.1`.
 2. Filter `udp.port == 51820` (atau `wireguard`): hanya paket UDP terenkripsi (*Transport Data*).
-3. Filter `tcp.port == 2204` pada interface Host-only: **kosong**, karena SSH berjalan di dalam terowongan.
+3. Filter `tcp.port == 2203` pada interface Host-only: **kosong**, karena SSH berjalan di dalam terowongan.
 4. Screenshot kedua kondisi.
 
 **Jenis VPN:** **remote-access VPN (client-to-server)** berbasis **WireGuard**; bekerja di **layer 3** (interface virtual `wg0`), memakai **UDP**, kriptografi modern (Curve25519, ChaCha20-Poly1305). Berbeda dengan *site-to-site VPN* yang menghubungkan dua jaringan kantor. Karena `AllowedIPs` hanya subnet VPN, ini *split tunnel*, bukan *full tunnel*.
 
-**Kaitkan dengan A2 (Fortinet):** gerbang VPN yang terbuka ke seluruh internet dan tak ditambal adalah pintu masuk empuk. Pada RDH, port WireGuard hanya terbuka untuk IP klien tertentu, WireGuard tidak merespons paket tanpa kunci yang valid (permukaan serangan kecil), dan di balik VPN masih ada lapisan MFA di SSH.
+**Kaitkan dengan A2 (PDN):** pusat data yang bisa dijangkau dan dikuasai penyerang akan berakhir dengan data terenkripsi. Pada RDH, port WireGuard hanya terbuka untuk IP klien tertentu, WireGuard tidak merespons paket tanpa kunci yang valid (permukaan serangan kecil), SSH hanya terbuka di dalam terowongan, dan di baliknya masih ada lapisan MFA. Kalau semua itu tembus, B4 (backup terpisah) menjadi pertahanan terakhir.
 
 ---
 
@@ -1194,7 +1202,7 @@ ssh -p 2204 admin04@10.10.4.1                              # lewat VPN → berha
 
 ### D1. Simulasi insiden dengan fail2ban
 
-**Skenario (sambungan cerita Fortinet):** kredensial VPN seorang staf RDH diduga bocor, sehingga seseorang memiliki akses ke terowongan `10.10.4.0/24`. Dari dalam VPN, ia mencoba menebak login SSH server. Pada simulasi, **`kdi-kel04-cli` (10.10.4.2) berperan sebagai penyerang.** Lapisan pertama (MFA) sudah menahan masuk; lapisan berikutnya (fail2ban) mendeteksi dan memblokir sumbernya.
+**Skenario (sambungan cerita PDN):** akun VPN seorang staf RDH diduga bocor atau laptopnya terinfeksi, sehingga penyerang mendapat jalur ke terowongan `10.10.3.0/24`. Dari dalam VPN ia mencoba menebak login SSH server, **akses awal** yang pada serangan ransomware lazimnya disusul penonaktifan pertahanan dan enkripsi data. Pada simulasi, **`kdi-kel03-cli` (10.10.3.2) berperan sebagai penyerang.** Lapisan pertama (MFA) menahan masuk; lapisan berikutnya (fail2ban) mendeteksi dan memblokir sumbernya; dan kalau semuanya gagal, backup B4 yang menyelamatkan data.
 
 **1) Pasang dan atur fail2ban (server):**
 
@@ -1207,7 +1215,7 @@ ignoreip = 127.0.0.1/8 ::1
 
 [sshd]
 enabled  = true
-port     = 2204
+port     = 2203
 backend  = systemd
 maxretry = 3
 findtime = 10m
@@ -1224,22 +1232,22 @@ sudo fail2ban-client status sshd        # Currently banned: 0
 **2) Percobaan login gagal (klien, lewat VPN), minimal 4 kali:**
 
 ```bash
-ssh -p 2204 hacker@10.10.4.1      # user tidak ada; ulangi minimal 4 kali
-ssh -p 2204 hacker@10.10.4.1
-ssh -p 2204 hacker@10.10.4.1
-ssh -p 2204 hacker@10.10.4.1
+ssh -p 2203 hacker@10.10.3.1      # user tidak ada; ulangi minimal 4 kali
+ssh -p 2203 hacker@10.10.3.1
+ssh -p 2203 hacker@10.10.3.1
+ssh -p 2203 hacker@10.10.3.1
 ```
 
 Pada percobaan awal akan muncul `Permission denied (publickey)`. Begitu IP diblokir, percobaan berikutnya **timeout**. Itu efek yang ditunjukkan di video.
 
 > Satu percobaan bisa menghasilkan lebih dari satu baris log, jadi blokir bisa terjadi sebelum percobaan ke-4. Itu wajar. Catat jumlah percobaan sebenarnya dari log, dan tetap lakukan percobaan ≥ 4 kali agar efek blokir terlihat.
 >
-> *Varian opsional (menunjukkan "false positive"):* login sebagai `admin04` dengan kode TOTP yang sengaja salah. Perhatikan: karena fail2ban memblokir **IP**, admin asli dari IP yang sama ikut terkunci selama 10 menit. Ini bahan bagus untuk *lessons learned*.
+> *Varian opsional (menunjukkan "false positive"):* login sebagai `admin03` dengan kode TOTP yang sengaja salah. Perhatikan: karena fail2ban memblokir **IP**, admin asli dari IP yang sama ikut terkunci selama 10 menit. Ini bahan bagus untuk *lessons learned*.
 
 **3) Buktikan IP terblokir dan kumpulkan jejak (server; pakai konsol VirtualBox bila perlu):**
 
 ```bash
-sudo fail2ban-client status sshd                          # Banned IP list: 10.10.4.2
+sudo fail2ban-client status sshd                          # Banned IP list: 10.10.3.2
 sudo journalctl -u ssh --since "15 minutes ago" --no-pager | tail -30     # "Invalid user hacker ..."
 sudo journalctl -u fail2ban --since "15 minutes ago" --no-pager | tail
 sudo tail -20 /var/log/fail2ban.log
@@ -1259,12 +1267,12 @@ Hash ini membuktikan log tidak diubah setelah diambil (*chain of custody* sederh
 **4) Buka blokir (recovery):**
 
 ```bash
-sudo fail2ban-client set sshd unbanip 10.10.4.2
+sudo fail2ban-client set sshd unbanip 10.10.3.2
 sudo fail2ban-client status sshd             # daftar blokir kosong lagi
 ```
 ```bash
 # klien: akses sah pulih
-ssh -p 2204 admin04@10.10.4.1                # key + TOTP berhasil
+ssh -p 2203 admin03@10.10.3.1                # key + TOTP berhasil
 ```
 
 **Catat waktu** tiap kejadian (percobaan pertama, ambang tercapai, blokir, unban) untuk timeline D2. Zona waktu sudah WIB.
@@ -1277,10 +1285,10 @@ ssh -p 2204 admin04@10.10.4.1                # key + TOTP berhasil
 
 | Item | Isi |
 |---|---|
-| ID | INC-KEL04-001 |
+| ID | INC-KEL03-001 |
 | Judul | Percobaan brute force SSH dari akun VPN yang diduga terkompromi |
 | Tingkat keparahan | Sedang (percobaan gagal dan terblokir; tidak ada akses tidak sah) |
-| Sistem terdampak | `kdi-kel04-srv` (layanan SSH port 2204) |
+| Sistem terdampak | `kdi-kel03-srv` (layanan SSH port 2203) |
 | Pelapor / handler | (nama anggota 7) |
 
 **Matriks keparahan RCSIRT** (bagian "Preparation"):
@@ -1297,7 +1305,7 @@ ssh -p 2204 admin04@10.10.4.1                # key + TOTP berhasil
 | Tahap | Pertanyaan yang dijawab | Isi untuk insiden ini |
 |---|---|---|
 | 1. Preparation | Apa yang sudah disiapkan *sebelum* kejadian? | Kebijakan keamanan, struktur CSIRT, MFA, UFW, VPN, fail2ban, backup, snapshot, matriks keparahan |
-| 2. Identification | Bagaimana kita tahu ini insiden? Seberapa luas? | Pola login gagal berulang di journald, IP sumber `10.10.4.2`, jumlah percobaan, user yang dicoba (`hacker`), tidak ada login sukses; hash bukti |
+| 2. Identification | Bagaimana kita tahu ini insiden? Seberapa luas? | Pola login gagal berulang di journald, IP sumber `10.10.3.2`, jumlah percobaan, user yang dicoba (`hacker`), tidak ada login sukses; hash bukti |
 | 3. Containment | Bagaimana menghentikan penyebaran sementara? | fail2ban memblokir IP (jangka pendek); akses SSH hanya subnet VPN (jangka panjang); tidak ada isolasi total karena akses sah masih dibutuhkan |
 | 4. Eradication | Bagaimana menghapus akar masalah? | Verifikasi tak ada akun/kunci/proses asing; tinjau `authorized_keys`; reset kredensial VPN yang diduga bocor (cabut peer WireGuard, buat key baru); tinjau `wg show` |
 | 5. Recovery | Bagaimana layanan kembali normal dengan aman? | Unban IP sah, verifikasi login admin (key + TOTP), pantau log beberapa saat |
@@ -1307,9 +1315,9 @@ ssh -p 2204 admin04@10.10.4.1                # key + TOTP berhasil
 
 | Waktu (WIB) | Kejadian | Sumber bukti |
 |---|---|---|
-| hh:mm:ss | Percobaan login gagal pertama dari 10.10.4.2 | `journalctl -u ssh` (Gambar 4.x) |
+| hh:mm:ss | Percobaan login gagal pertama dari 10.10.3.2 | `journalctl -u ssh` (Gambar 4.x) |
 | hh:mm:ss | Ambang `maxretry` tercapai | log fail2ban |
-| hh:mm:ss | IP 10.10.4.2 diblokir (ban 10 menit) | `fail2ban-client status sshd` |
+| hh:mm:ss | IP 10.10.3.2 diblokir (ban 10 menit) | `fail2ban-client status sshd` |
 | hh:mm:ss | Analis mengonfirmasi tidak ada login sukses | grep `Accepted` pada log |
 | hh:mm:ss | Bukti diamankan dan di-hash | `hash_bukti.txt` |
 | hh:mm:ss | IP dibuka blokirnya (recovery) | `fail2ban-client set sshd unbanip` |
@@ -1351,6 +1359,8 @@ Alur eskalasi: **Deteksi → Analis → Incident Commander → Pimpinan RDH → 
 
 **Pertanyaan analisis (jawab di laporan):** *Apakah insiden D1 wajib diberitahukan?* Argumen logisnya: tidak ada login berhasil, jadi tidak ada data pribadi yang terungkap, maka kemungkinan **bukan** kegagalan pelindungan data yang memicu kewajiban notifikasi. Tetapi insiden **tetap didokumentasikan** (sejalan dengan semangat Pasal 47 dan Art. 33(5)). Sebagai latihan (*tabletop*), tulis satu paragraf: *seandainya* login berhasil dan CSV pelanggan terbaca, apa saja isi pemberitahuan 3×24 jam (data yang terungkap, kapan/bagaimana, penanganan, kontak DPO)?
 
+**Lanjutan skenario ala PDN (tabletop, opsional tapi bernilai):** seandainya penyerang berhasil masuk dan mengenkripsi `/data`, apa langkah RCSIRT? Jawabannya menyambung ke B4: isolasi server, identifikasi cakupan, pulihkan dari salinan terpisah di klien, verifikasi dengan hash, lalu tentukan apakah notifikasi 3×24 jam wajib. Perhatikan: justru karena kita punya backup terpisah dan teruji, dampak pada **availability** bisa ditekan, perbedaan utama dengan PDN.
+
 ---
 
 ## 8. Peta logika: ancaman → kontrol → bukti
@@ -1367,7 +1377,7 @@ Tabel ini adalah "tulang punggung logika" laporan. Taruh di BAB 4 atau ringkasan
 | Tebak/curi login SSH (R1) | Kunci + TOTP, port non-standar, AllowUsers | C2 | Confidentiality | Login butuh kunci dan kode |
 | Penyadapan kredensial (R2) | HTTPS | C3 | Confidentiality | Wireshark HTTP vs HTTPS |
 | Permukaan serangan terlalu luas (R1, R5) | UFW default deny | C4 | Confidentiality, Availability | nmap sebelum/sesudah |
-| Kredensial/gateway VPN disalahgunakan (R5) | WireGuard + SSH hanya via VPN | C5 | Confidentiality | SSH Host-only ditolak, via VPN berhasil; UDP terenkripsi |
+| Penyerang di dalam jaringan/VPN menyerang server (R5) | WireGuard + SSH hanya via VPN | C5 | Confidentiality | SSH Host-only ditolak, via VPN berhasil; UDP terenkripsi |
 | Brute force lolos ke server (R1, R5) | fail2ban + respons NIST | D1, D2 | Confidentiality, Availability | IP terblokir + log + laporan |
 
 ---
@@ -1380,7 +1390,7 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 
 | Bagian | Isi | Perkiraan halaman |
 |---|---|---|
-| Sampul | Judul, **Kelompok 4**, nama dan NIM semua anggota, kelas | 1 |
+| Sampul | Judul, **Kelompok 3**, nama dan NIM semua anggota, kelas | 1 |
 | Pembagian tugas | Tabel nama, NIM, peran, bagian (tabel 0.3). **Anggota yang tidak berkontribusi: nama diberi font merah** | 1 |
 | **BAB 1** Pendahuluan | Profil RDH, spesifikasi host, topologi, tabel parameter, kebijakan keamanan, register aset/risiko | 2–3 |
 | **BAB 2** Kajian konsep, etika, privasi | A1, A2, A3 | 4–5 |
@@ -1391,8 +1401,8 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 | Lampiran (tidak dihitung) | Change log, struktur CSIRT, daftar tool AI, skrip `backup.sh`, konfigurasi (tersensor) | bebas |
 
 **Aturan gambar:**
-- Setiap gambar punya **nomor dan keterangan**, misal *Gambar 3.12 Hasil nmap sebelum UFW dari kdi-kel04-cli*.
-- **Hostname terlihat** (prompt `...@kdi-kel04-...`). Tanpa itu, butir tidak dinilai.
+- Setiap gambar punya **nomor dan keterangan**, misal *Gambar 3.12 Hasil nmap sebelum UFW dari kdi-kel03-cli*.
+- **Hostname terlihat** (prompt `...@kdi-kel03-...`). Tanpa itu, butir tidak dinilai.
 - **Sensor** dengan kotak hitam: password, passphrase, private key, QR TOTP, kode cadangan (blur tipis tidak aman).
 
 **Nama berkas screenshot:** `B1-01-enkripsi.png`, `C3-02-wireshark-http.png`, dst. Lalu tinggal diurutkan.
@@ -1401,7 +1411,7 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 |---|---|
 | Tahap 3 | `ip a` kedua VM, `ping`, `id` tiga user, struktur `/data` |
 | B1 | enkripsi, isi `.enc` acak, dekripsi + `IDENTIK` |
-| B2 | generate key, tukar public key + fingerprint, encrypt+sign, decrypt + `Good signature`, `No secret key` untuk staf04 |
+| B2 | generate key, tukar public key + fingerprint, encrypt+sign, decrypt + `Good signature`, `No secret key` untuk staf03 |
 | B3 | dua hash berbeda, `Good signature` vs `BAD signature` |
 | B4 | isi `backup.sh`, hasil cron (≥2 file), salinan di klien, `rm -rf /data`, restore, hash sama |
 | C1 | `ls -ld`, `getfacl`, tabel prediksi, minimal 10 pengujian `sudo -u` |
@@ -1424,7 +1434,7 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 | Segmen | Durasi | Isi | Pembicara |
 |---|---|---|---|
 | 1. Pembukaan | ±1 mnt | Perkenalan anggota, peran, RDH, dan cerita besar (0.2) | Ketua (1) + semua menyebut nama dan peran |
-| 2. Konsep dan etika | ±2 mnt | Klasifikasi data, ringkasan A2 Fortinet (pelanggaran, regulasi, 3 rekomendasi), kebijakan privasi | 1 dan 8 |
+| 2. Konsep dan etika | ±2 mnt | Klasifikasi data, ringkasan A2 PDN (kronologi, pelanggaran, regulasi, 3 rekomendasi), kebijakan privasi | 1 dan 8 |
 | 3. Kripto dan backup | ±3 mnt | AES, GPG (encrypt+sign, verifikasi), hash/BAD signature, backup → hapus → restore | 2 dan 3 |
 | 4. Akses dan jaringan | ±6 mnt | Uji akses 3 user (C1), SSH + TOTP (C2), Wireshark HTTP vs HTTPS (C3), nmap sebelum/sesudah (C4), SSH via VPN (C5) | 4, 5, 6 (±2 mnt masing-masing) |
 | 5. Insiden | ±2 mnt | Serangan simulasi → blokir fail2ban → ringkasan 6 tahap NIST | 7 (+ 8 untuk UU PDP vs GDPR) |
@@ -1434,11 +1444,11 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 
 | Menit | Demo | Apa yang harus terlihat |
 |---|---|---|
-| 0–1.5 | C1: `sudo -u staf04 ls /data/confidential` (ditolak) vs `auditor04` (berhasil), tulis ke internal | Prediksi = hasil, `Permission denied` |
-| 1.5–3 | C2: login `admin04` dari klien, kode TOTP muncul, `root` ditolak | Prompt `Verification code:` |
+| 0–1.5 | C1: `sudo -u staf03 ls /data/confidential` (ditolak) vs `auditor03` (berhasil), tulis ke internal | Prediksi = hasil, `Permission denied` |
+| 1.5–3 | C2: login `admin03` dari klien, kode TOTP muncul, `root` ditolak | Prompt `Verification code:` |
 | 3–4 | C3: Wireshark `http.authbasic` (terbaca) vs `tls` (terenkripsi) | Dua layar berdampingan |
 | 4–5 | C4: nmap sebelum (80 open) vs sesudah (80 filtered) | Tabel port berubah |
-| 5–6 | C5: SSH ke `192.168.56.104` ditolak, ke `10.10.4.1` berhasil, Wireshark hanya UDP | Efek VPN |
+| 5–6 | C5: SSH ke `192.168.56.103` ditolak, ke `10.10.3.1` berhasil, Wireshark hanya UDP | Efek VPN |
 
 **Tips produksi:**
 - Pakai OBS Studio atau perekam layar bawaan; **perbesar font terminal** (`Ctrl` + `+`).
@@ -1462,8 +1472,8 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 
 **Checklist akhir:**
 
-- [ ] Parameter Kelompok 4 benar di semua konfigurasi (kel04, .104/.154, port 2204, 10.10.4.x)
-- [ ] Setiap screenshot menampilkan hostname `kdi-kel04-...`
+- [ ] Parameter Kelompok 3 benar di semua konfigurasi (kel03, .103/.153, port 2203, 10.10.3.x)
+- [ ] Setiap screenshot menampilkan hostname `kdi-kel03-...`
 - [ ] Password, passphrase, private key, QR TOTP, kode cadangan **tersensor**
 - [ ] Laporan 10–25 halaman (di luar lampiran), format A4, 12 pt, spasi 1,5, gambar bernomor
 - [ ] Daftar pustaka ≥ 5, termasuk UU 27/2022 dan panduan NIST
@@ -1505,10 +1515,10 @@ Tulis di Google Docs/Word, lalu ekspor ke PDF.
 | Wireshark tak melihat interface | User belum di grup `wireshark` | `sudo usermod -aG wireshark $USER`, login ulang; atau jalankan dengan `sudo` |
 | Tidak ada paket HTTP di capture | Salah interface | Pilih interface Host-only (`enp0s8`), bukan NAT |
 | `setfacl: command not found` | Paket `acl` belum terpasang | `sudo apt install acl` |
-| `Permission denied` saat `sudo -u staf04 ...` ke home admin | Home Ubuntu 24.04 bermode 750 | Pakai `/srv/pertukaran` atau salin berkas ke lokasi yang bisa dibaca |
+| `Permission denied` saat `sudo -u staf03 ...` ke home admin | Home Ubuntu 24.04 bermode 750 | Pakai `/srv/pertukaran` atau salin berkas ke lokasi yang bisa dibaca |
 | gpg: `Inappropriate ioctl for device` | Pinentry tak menemukan terminal | `export GPG_TTY=$(tty)` |
 | WireGuard tidak handshake | Public key tertukar, `Endpoint` salah, port 51820/udp belum diizinkan | Cek `wg show`, `sudo ufw status`, ulangi pertukaran public key |
-| fail2ban tidak memblokir | Port jail salah, backend salah, IP masuk `ignoreip` | `fail2ban-client get sshd ignoreip`; pastikan `port = 2204`, `backend = systemd` |
+| fail2ban tidak memblokir | Port jail salah, backend salah, IP masuk `ignoreip` | `fail2ban-client get sshd ignoreip`; pastikan `port = 2203`, `backend = systemd` |
 | Nginx gagal reload | Sintaks salah | `sudo nginx -t` dan baca baris error |
 | Disk server penuh | Cron backup masih aktif | `sudo crontab -e` beri `#`, hapus backup lama |
 | Pertanyaan teknis | | Tanyakan ke Pak Nizam di hari dan jam kerja |
@@ -1526,20 +1536,21 @@ Gunakan minimal 5 untuk daftar pustaka (format sitasi mengikuti pedoman kampus; 
 4. California Consumer Privacy Act (CCPA).
 5. RFC 6238, *TOTP: Time-Based One-Time Password Algorithm*.
 
-**Studi kasus VPN Fortinet (A2)**
-6. BleepingComputer, *Hacker posts exploits for over 49,000 vulnerable Fortinet VPNs*: https://www.bleepingcomputer.com/news/security/hacker-posts-exploits-for-over-49-000-vulnerable-fortinet-vpns/
-7. SiliconANGLE, *Hacker publishes credentials stolen from Fortinet's FortiGate VPNs* (25 Nov 2020): https://siliconangle.com/2020/11/25/hacker-publishes-credentials-stolen-fortinet-fortigate-vpns/
-8. Security Affairs, *The global impact of the Fortinet 50.000 VPN leak posted online*: https://securityaffairs.com/111548/hacking/fortinet-vpn-leak-impact.html
-9. Fortinet PSIRT Advisory FG-IR-18-384: https://www.fortiguard.com/psirt/FG-IR-18-384
+**Studi kasus PDN (A2)**
+6. ANTARA, *Menkominfo jelaskan kronologi serangan siber PDNS 2*: https://kalsel.antaranews.com/berita/419220/menkominfo-jelaskan-kronologi-serangan-siber-pdns-2
+7. Investortrust, *Pusat Data Nasional kena serangan siber, pemerintah diminta tebusan Rp 131 miliar*: https://investortrust.id/business/31113/pusat-data-nasional-kena-serangan-siber-pemerintah-diminta-tebusan-rp-131-miliar
+8. Investortrust, *Diserang 2 ransomware, pemulihan PDNS 2 butuh waktu berbulan-bulan*: https://investortrust.id/national/32804/diserang-2-ransomware-pemulihan-pdns-2-butuh-waktu-berbulan-bulan
+9. CNN Indonesia, *Apa itu Brain Cipher ransomware yang serang Pusat Data Nasional?*: https://www.cnnindonesia.com/teknologi/20240625062350-192-1113701/apa-itu-brain-cipher-ransomware-yang-serang-pusat-data-nasional
+10. Kominfo, Siaran Pers No. 415/HM/KOMINFO/06/2024: https://infopublik.id/kategori/siaran-pers/837949/siaran-pers-wamenkominfo-insiden-pdns-2-jadi-pelajaran-penting
 
 **Pemberitahuan kegagalan pelindungan data (D2)**
-10. Hukumonline, *Kewajiban Penting dalam UU PDP dan Sanksinya Jika Melanggar*: https://www.hukumonline.com/klinik/a/kewajiban-penting-dalam-uu-pdp-dan-sanksinya-jika-melanggar-lt633abd26570aa
-11. Teks Pasal 46 UU 27/2022: https://pasal.id/peraturan/uu/uu-no-27-tahun-2022/pasal-46
+11. Hukumonline, *Kewajiban Penting dalam UU PDP dan Sanksinya Jika Melanggar*: https://www.hukumonline.com/klinik/a/kewajiban-penting-dalam-uu-pdp-dan-sanksinya-jika-melanggar-lt633abd26570aa
+12. Teks Pasal 46 UU 27/2022: https://pasal.id/peraturan/uu/uu-no-27-tahun-2022/pasal-46
 
 **Panduan teknis**
-12. Ubuntu, *Configure SSH to use two-factor authentication* (tutorial resmi).
-13. Ubuntu, *Set Up WireGuard VPN on Ubuntu 24.04*.
-14. WireGuard, *Whitepaper*: https://www.wireguard.com/papers/wireguard.pdf
+13. Ubuntu, *Configure SSH to use two-factor authentication* (tutorial resmi).
+14. Ubuntu, *Set Up WireGuard VPN on Ubuntu 24.04*.
+15. WireGuard, *Whitepaper*: https://www.wireguard.com/papers/wireguard.pdf
 
 > Pastikan kamu benar-benar membaca sumber yang dikutip, dan kutip dengan kalimatmu sendiri.
 
